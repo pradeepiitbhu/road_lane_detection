@@ -1,5 +1,5 @@
 import cv2
-import pandas as pd
+
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -11,12 +11,16 @@ def canny(image):
 
 def region_of_interest(image):
     height = image.shape[0]
-    polygons = np.array([[(200, height), (1100, height), (600, 280)]])
+    polygons = np.array([[(200, height), (1100, height),
+                          (600, 280)]])
     mask = np.zeros_like(image)
     cv2.fillPoly(mask, polygons, 255)
     masked_img = cv2.bitwise_and(image, mask)
     return masked_img
 
+def hough_lines(image):
+    lines = cv2.HoughLinesP(image, 2, np.pi / 180, 100, np.array([]), minLineLength=40, maxLineGap=10)
+    return lines
 def display_lines(image, lines):
     line_image = np.zeros_like(image)
     if lines is not None:
@@ -55,7 +59,7 @@ def make_cordinates(image, line_parameters):
 
 
 
-cap = cv2.VideoCapture("test2.mp4")
+cap = cv2.VideoCapture("test_drive.mp4")
 while(cap.isOpened()):
     _, frame = cap.read()
     lane_img = np.copy(frame)
@@ -63,17 +67,17 @@ while(cap.isOpened()):
     canny_img = canny(lane_img)
     cropped_img = region_of_interest(canny_img)
 
-    lines = cv2.HoughLinesP(cropped_img, 2, np.pi / 180, 100, np.array([]), minLineLength=40, maxLineGap=1000)
+    lines = hough_lines(cropped_img)
     averaged_lines = average_slope_intercept(lane_img, lines)
     line_img = display_lines(lane_img, averaged_lines)
     combo_img = cv2.addWeighted(lane_img, 0.8, line_img, 1, 1)
 
-    # find region of interest
+
     cv2.imshow("image", combo_img)
 
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
 cap.release()
-cap.destroyallWindows()
+cap.destroyAllWindows()
 
 
